@@ -1,4 +1,4 @@
-# DungeonEscapeV2 — Stage 2 Visual Foundation
+# DungeonEscape — Stage 2 Visual Foundation
 
 Java 21 Swing project. No build tools, no external libraries. Stage 2 adds a
 fixed-size dungeon view with an animated torch and a compact HUD on top of the
