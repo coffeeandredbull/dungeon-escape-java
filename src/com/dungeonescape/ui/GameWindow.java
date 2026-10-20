@@ -1,28 +1,30 @@
 package com.dungeonescape.ui;
 
+import com.dungeonescape.asset.AssetLoader;
+
 import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.SwingConstants;
 import java.awt.BorderLayout;
 
 /**
  * The application's main window.
  *
- * <p>Stage 1 scope: a minimal titled frame with a short status label. The
- * dungeon view, HUD, and all gameplay are added in later stages.</p>
+ * <p>Stage 2 scope: the window is a fixed-size composition of a compact HUD
+ * above the dungeon view. All gameplay remains out of scope.</p>
  */
 public class GameWindow extends JFrame {
 
     /** Creates the window. Callers should invoke this on the Swing EDT. */
     public GameWindow() {
-        super("Dungeon Escape V2 - Stage 1");
+        super("Dungeon Escape V2 - Stage 2");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(640, 480);
-        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
 
-        JLabel status = new JLabel(
-                "Dungeon Escape V2 - Stage 1 foundation (assets verified, no gameplay yet)",
-                SwingConstants.CENTER);
-        add(status, BorderLayout.CENTER);
+        AssetLoader loader = new AssetLoader();
+        add(new HudPanel(), BorderLayout.NORTH);
+        add(new DungeonPanel(loader), BorderLayout.CENTER);
+
+        pack();
+        setResizable(false);
+        setLocationRelativeTo(null);
     }
 }
