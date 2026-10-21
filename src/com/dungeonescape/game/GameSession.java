@@ -25,6 +25,9 @@ public class GameSession {
     private final List<Level> levels;
     private final Consumer<String> sound;
 
+    /** Gameplay audio cues pending delivery, processed FIFO each tick. */
+    private final GameEventQueue events = new GameEventQueue();
+
     private int levelIndex;
     private int score;
     private int lives;
@@ -40,6 +43,9 @@ public class GameSession {
     private double monsterMoveAccum;
 
     private Player player;
+
+    /** Positions the player can undo back to (Z key). */
+    private final MoveHistory moveHistory = new MoveHistory();
 
     public GameSession(List<Level> levels, Consumer<String> sound) {
         this.levels = new ArrayList<>(levels);
@@ -72,6 +78,7 @@ public class GameSession {
         stepAccum = 0;
         doorOpeningTime = 0;
         monsterMoveAccum = 0;
+        moveHistory.clear();
 
         Dungeon dungeon = levels.get(0).dungeon();
         player = new Player(dungeon.startX(), dungeon.startY());
@@ -140,6 +147,9 @@ public class GameSession {
                 advanceLevel();
             }
 
+            // Deliver the victory cue recorded by the level transition.
+            deliverPendingEvents();
+
             return;
         }
 
@@ -150,25 +160,106 @@ public class GameSession {
         handleMonsterContact();
 
         if (gameOver) {
+            // Deliver the game-over cue recorded by the killing blow.
+            deliverPendingEvents();
             return;
         }
 
         moveMonsters(dt);
 
+        double preX = player.x();
+        double preY = player.y();
+        int preTileCol = tileOf(player.x());
+        int preTileRow = tileOf(player.y());
+
         player.update(dt, input, level().dungeon());
+
+        recordTileChange(preX, preY, preTileCol, preTileRow);
 
         if (player.isMoving()) {
             stepAccum += dt;
 
             while (stepAccum >= STEP_SECONDS) {
                 stepAccum -= STEP_SECONDS;
-                sound.accept("footstep");
+                events.enqueue("footstep");
             }
         } else {
             stepAccum = 0;
         }
 
         handleObjects();
+
+        deliverPendingEvents();
+    }
+
+    /**
+     * Records the position held before this movement tick whenever the
+     * movement carried the player onto a new tile.
+     *
+     * <p>Recording is tile-level, so holding a key against a wall — or any
+     * blocked attempt that leaves the tile unchanged — records nothing.
+     * The recorded position is the player's own previous position, which
+     * is by construction collision-free and inside the dungeon.</p>
+     */
+    private void recordTileChange(
+            double preX, double preY, int preCol, int preRow) {
+
+        if (tileOf(player.x()) != preCol
+                || tileOf(player.y()) != preRow) {
+            moveHistory.push(preX, preY);
+        }
+    }
+
+    /**
+     * Restores the player's most recent recorded position (Z key).
+     *
+     * <p>Only the position is restored. Score, held key, opened doors,
+     * lives, invulnerability, and monster positions are deliberately left
+     * alone: silently rewinding unrelated state would allow re-earning
+     * chest gold or unpicking rule outcomes. The restored position is one
+     * the player actually occupied during play, so undo can never place
+     * the player inside a wall or outside the map.</p>
+     *
+     * @return true when a recorded position was restored; false when the
+     *         history is empty or the run already ended (or the exit-door
+     *         animation is running, because undoing mid-transition would
+     *         skip level state)
+     */
+    public boolean undoLastMove() {
+        if (gameOver || victory || doorOpening) {
+            return false;
+        }
+
+        MoveHistory.Position previous = moveHistory.pop();
+
+        if (previous == null) {
+            return false;
+        }
+
+        player = new Player(previous.x(), previous.y());
+
+        // Prevent leftover movement time from triggering footstep sounds.
+        stepAccum = 0;
+
+        return true;
+    }
+
+    /**
+     * Drains the event queue in FIFO order, handing every recorded cue to
+     * the sound consumer. Called at the end of each update tick and after
+     * the early-return paths that record a cue, so no event survives a
+     * tick undelivered except when the program has stopped updating.
+     *
+     * <p>Delivery is a small batch of non-blocking sound starts on the
+     * EDT the loop already runs on, so no extra thread is created and no
+     * input handling is delayed.</p>
+     */
+    private void deliverPendingEvents() {
+        String event;
+
+        while ((event = events.dequeue()) != null) {
+            sound.accept(event);
+        }
     }
 
     /**
@@ -308,13 +399,13 @@ public class GameSession {
                 case CHEST -> {
                     object.remove();
                     score += CHEST_SCORE;
-                    sound.accept("chest");
+                    events.enqueue("chest");
                 }
 
                 case KEY -> {
                     object.remove();
                     hasKey = true;
-                    sound.accept("key");
+                    events.enqueue("key");
                 }
 
                 case POTION -> {
@@ -322,7 +413,7 @@ public class GameSession {
                     lives = Math.min(
                             START_LIVES,
                             lives + POTION_HEAL);
-                    sound.accept("potion");
+                    events.enqueue("potion");
                 }
 
                 case DOOR -> {
@@ -330,7 +421,7 @@ public class GameSession {
                         object.remove();
                         doorOpening = true;
                         doorOpeningTime = DOOR_OPEN_SECONDS;
-                        sound.accept("door");
+                        events.enqueue("door");
                         return;
                     }
                 }
@@ -356,7 +447,7 @@ public class GameSession {
         if (lives <= 0) {
             lives = 0;
             gameOver = true;
-            sound.accept("gameover");
+            events.enqueue("gameover");
         } else {
             Dungeon dungeon = level().dungeon();
 
@@ -366,7 +457,7 @@ public class GameSession {
             // Prevent leftover movement time from triggering footstep sounds.
             stepAccum = 0;
 
-            sound.accept("monster");
+            events.enqueue("monster");
         }
     }
 
@@ -385,9 +476,10 @@ public class GameSession {
             stepAccum = 0;
             monsterMoveAccum = 0;
             doorOpeningTime = 0;
+            moveHistory.clear();
         } else {
             victory = true;
-            sound.accept("victory");
+            events.enqueue("victory");
         }
     }
 

@@ -4,6 +4,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -31,6 +32,7 @@ public class TitlePanel extends JPanel {
     private static final Color ACCENT = new Color(120, 84, 40);
 
     private final Runnable onStart;
+    private final JTextField nameField;
 
     /**
      * Creates the title screen.
@@ -50,8 +52,15 @@ public class TitlePanel extends JPanel {
         JLabel instructions = label("<html><div style='text-align:center'>"
                 + "Move with <b>W A S D</b> or the <b>arrow keys</b>.<br>"
                 + "Find the <b>key</b>, open the <b>chest</b> for gold, and drink <b>potions</b> to heal.<br>"
-                + "Avoid the <b>monster</b> and unlock the <b>door</b> to escape.</div></html>",
+                + "Avoid the <b>monster</b> and unlock the <b>door</b> to escape.<br>"
+                + "Press <b>Z</b> to undo your last step.</div></html>",
                 MUTED, new Font("SansSerif", Font.PLAIN, 15));
+
+        nameField = new JTextField();
+        nameField.setHorizontalAlignment(JTextField.CENTER);
+        nameField.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        nameField.setPreferredSize(new Dimension(220, 36));
+        nameField.setToolTipText("Type your name for the leaderboard (optional)");
 
         JButton start = new JButton("START");
         start.setFocusPainted(false);
@@ -82,12 +91,35 @@ c.fill = GridBagConstraints.HORIZONTAL;
 c.weightx = 1;
 add(instructions, c);
 
+c.gridy = 3;
+c.insets = new Insets(0, 20, 6, 20);
+c.fill = GridBagConstraints.NONE;
+c.weightx = 0;
+c.anchor = GridBagConstraints.CENTER;
+add(nameField, c);
+
 c.insets = new Insets(14, 20, 20, 20);
 c.fill = GridBagConstraints.NONE;
 c.weightx = 0;
 c.anchor = GridBagConstraints.CENTER;
-c.gridy = 3;
+c.gridy = 4;
 add(start, c);
+    }
+
+    /**
+     * Trimmed player name typed into the title-screen field, or {@code null}
+     * when left blank. The leaderboard stores its default name in that case.
+     */
+    public String playerName() {
+        String text = nameField.getText();
+
+        if (text == null) {
+            return null;
+        }
+
+        String trimmed = text.trim();
+
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private static JLabel label(String text, Color foreground, Font font) {

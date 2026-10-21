@@ -66,6 +66,16 @@ public class Dungeon {
         return cols;
     }
 
+    /** Player start tile column (index into {@code layout}). */
+    public int startCol() {
+        return startCol;
+    }
+
+    /** Player start tile row (index into {@code layout}). */
+    public int startRow() {
+        return startRow;
+    }
+
     /** Number of tile rows. */
     public int rows() {
         return rows;

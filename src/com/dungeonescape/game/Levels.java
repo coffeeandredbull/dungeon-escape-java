@@ -17,6 +17,11 @@ public final class Levels {
 
     /**
      * Creates all playable levels in progression order.
+     *
+     * <p>Every built level is checked with the recursive DFS reachability
+     * flood fill before it is handed to the game, so a layout that strands
+     * an objective (key, chest, potion, or exit door) is rejected at
+     * build time instead of producing an unwinnable level.</p>
      */
     public static List<Level> create() {
         List<Level> levels = new ArrayList<>();
@@ -25,7 +30,60 @@ public final class Levels {
         levels.add(level2());
         levels.add(level3());
 
+        validateReachableObjectives(levels);
+
         return levels;
+    }
+
+    /**
+     * Verifies, with the recursive DFS reachability checker, that every
+     * objective object in every level is reachable from the level's
+     * player start tile. Thrown as {@code IllegalStateException}, matching
+     * the dungeon layout validator's fail-fast behaviour.
+     *
+     * <p>Package-private: called by {@link #create()} and directly by
+     * the test class.</p>
+     *
+     * @throws IllegalStateException when an objective cannot be reached
+     */
+    static void validateReachableObjectives(List<Level> levels) {
+        if (levels == null) {
+            return;
+        }
+
+        for (Level level : levels) {
+            Dungeon dungeon = level.dungeon();
+
+            for (GameObject object : level.objects()) {
+                if (object.removed()
+                        || !isObjective(object.kind())) {
+                    continue;
+                }
+
+                if (!DungeonReachability.isReachable(
+                        dungeon,
+                        object.col(),
+                        object.row())) {
+
+                    throw new IllegalStateException("Level '"
+                            + level.name() + "': " + object.kind()
+                            + " at (" + object.col() + "," + object.row()
+                            + ") is not reachable from the player start ("
+                            + dungeon.startCol() + ","
+                            + dungeon.startRow() + ")");
+                }
+            }
+        }
+    }
+
+    /**
+     * Object kinds the player must be able to walk to and use.
+     */
+    private static boolean isObjective(Kind kind) {
+        return kind == Kind.KEY
+                || kind == Kind.DOOR
+                || kind == Kind.CHEST
+                || kind == Kind.POTION;
     }
 
     /**
