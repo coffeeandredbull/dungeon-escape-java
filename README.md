@@ -1,77 +1,135 @@
-# DungeonEscape — Stage 2 Visual Foundation
+# Dungeon Escape
 
-Java 21 Swing project. No build tools, no external libraries. Stage 2 adds a
-fixed-size dungeon view with an animated torch and a compact HUD on top of the
-Stage 1 foundation. No gameplay yet.
+A Java 21 dungeon escape game built with Java Swing. Explore dangerous dungeons, avoid monsters, collect items, and progress through three levels.
+
+## Features
+
+- **Three playable levels** with level progression.
+- **Player movement and collision detection** with walls and dungeon boundaries.
+- **Enemy encounters**, including animated monster sprites.
+- **Dungeon items and objects**, including keys, chests, doors, potions, and torches.
+- **Animated sprites** for the player and monsters.
+- **Audio effects** managed through a dedicated audio manager.
+- **Game HUD** displaying gameplay information.
+- **Title and result screens**, including starting and replaying the game.
+- **Automated tests** using a dependency-free Java test harness.
+- **No external libraries or build tools required.**
 
 ## Requirements
-- JDK 21 (verified with `javac 21.0.7`, Temurin)
-- Windows, plain `javac` / `java` from the command line
 
-## Project layout
-```
+- JDK 21 or a compatible newer JDK.
+- Windows CMD or another terminal that supports Java commands.
+- Git, if you want to clone or contribute to the repository.
+
+## Project structure
+
 DungeonEscapeV2/
-├── README.md
-├── out/                                  # compiled .class files (build output)
 ├── src/
 │   └── com/dungeonescape/
-│       ├── Main.java                     # entry point; diagnostics + Swing window
+│       ├── Main.java
 │       ├── asset/
-│       │   ├── AssetLoader.java          # loads/validates images and audio
-│       │   ├── AssetLoadException.java   # explicit failure type
-│       │   ├── AudioInfo.java            # decoded-audio metadata
-│       │   └── AssetDiagnostic.java      # per-file found/loaded report
+│       │   ├── AssetLoader.java
+│       │   ├── AssetLoadException.java
+│       │   ├── AudioInfo.java
+│       │   ├── AssetDiagnostic.java
+│       │   └── AudioManager.java
+│       ├── game/
+│       │   ├── Dungeon.java
+│       │   ├── GameObject.java
+│       │   ├── GameSession.java
+│       │   ├── InputState.java
+│       │   ├── Level.java
+│       │   ├── Levels.java
+│       │   └── Player.java
 │       └── ui/
-│           ├── GameWindow.java           # fixed-size frame (HUD + dungeon)
-│           ├── HudPanel.java             # title, level, placeholder score/lives
-│           └── DungeonPanel.java         # tile dungeon + animated torches
-├── assets/                               # PNG sprites (copied, unchanged)
-└── audio/                                # WAV sound effects (copied, unchanged)
-```
+│           ├── DungeonPanel.java
+│           ├── GameFlowListener.java
+│           ├── GameWindow.java
+│           ├── HudPanel.java
+│           ├── ResultPanel.java
+│           └── TitlePanel.java
+├── test/
+│   └── com/dungeonescape/
+│       ├── asset/AudioManagerTest.java
+│       ├── game/GameSessionTest.java
+│       ├── game/PlayerTest.java
+│       └── ui/
+│           ├── InputBindingTest.java
+│           └── ScreensTest.java
+├── assets/
+├── audio/
+└── README.md
 
-## How it works
-- `Main` prints the Stage 1 asset report, then opens the window on the Swing
-  Event Dispatch Thread. Stage 2 leaves `Main` and `AssetLoader` unchanged.
-- `GameWindow` composes a `HudPanel` (north) above a `DungeonPanel` (center),
-  then packs to a fixed, non-resizable size.
-- `DungeonPanel` draws a 16×12 tile grid (`TILE = 48`, panel 768×576). The
-  layout is a literal character grid: `#` wall, `.` floor, `T` torch. Outer
-  walls, interior wall stubs, and a central block are drawn as beveled stone
-  blocks that clearly contrast with the dark stone floor.
-- Torch flames use the existing `assets/walltorchflameani1..7.png` frames. All
-  frames are loaded once in the constructor through `AssetLoader`; a
-  `javax.swing.Timer` advances the frame and repaints, so `paintComponent`
-  never touches the file system. Missing/invalid torch frames surface as an
-  `AssetLoadException` with the file name and reason.
-- `HudPanel` is presentational only: title, level label, and placeholder
-  score/lives. No game state is wired up.
 
-## Compile (Windows CMD)
-Run from the `DungeonEscapeV2` folder:
-```cmd
+## Controls
+
+| Action | Controls |
+|---|---|
+| Move up | W or Up Arrow |
+| Move down | S or Down Arrow |
+| Move left | A or Left Arrow |
+| Move right | D or Right Arrow |
+
+The game uses keyboard bindings and collision detection to prevent the player from walking through solid walls or outside the dungeon boundaries.
+
+## Build
+
+Open Windows CMD in the project directory:
+
+cd /d C:\Users\www\Desktop\DungeonEscapeV2
+
+Compile all application source files:
+
+
 if not exist out mkdir out
-javac -d out -sourcepath src ^
-  src\com\dungeonescape\Main.java ^
-  src\com\dungeonescape\asset\AssetLoader.java ^
-  src\com\dungeonescape\asset\AssetLoadException.java ^
-  src\com\dungeonescape\asset\AudioInfo.java ^
-  src\com\dungeonescape\asset\AssetDiagnostic.java ^
-  src\com\dungeonescape\ui\GameWindow.java ^
-  src\com\dungeonescape\ui\HudPanel.java ^
-  src\com\dungeonescape\ui\DungeonPanel.java
-```
+dir /s /b src\*.java > sources.txt
+javac -Xlint:all -d out @sources.txt
 
-## Run (Windows CMD)
-```cmd
+
+## Run
+
+After compiling, launch the game:
+
+
 java -cp out com.dungeonescape.Main
-```
 
-The console prints the same Stage 1 asset report (for example
-`images found=47, loaded=47, failed=0 | audio found=7, decoded=7, failed=0`),
-and a window titled "Dungeon Escape V2 - Stage 2" opens showing the HUD and
-the torch-lit dungeon.
 
-## Notes
-- The old project `DungeonEscape` is not used, modified, or referenced.
-- The copied `assets/` and `audio/` files are left exactly as they were.
-- No sound is played and no gameplay systems exist in this stage.
+The game opens in a window with a title screen. Start a game and progress through the available levels.
+
+Keep the `assets/` and `audio/` directories alongside the project files so the game can load its images and sound effects.
+
+## Run the tests
+
+Compile the test source files:
+
+if not exist test_out mkdir test_out
+dir /s /b test\*.java > test_sources.txt
+javac -Xlint:all -cp out -d test_out @test_sources.txt
+
+
+Run all five test classes:
+
+java -cp "out;test_out" com.dungeonescape.asset.AudioManagerTest
+java -cp "out;test_out" com.dungeonescape.game.GameSessionTest
+java -cp "out;test_out" com.dungeonescape.game.PlayerTest
+java -cp "out;test_out" com.dungeonescape.ui.InputBindingTest
+java -cp "out;test_out" com.dungeonescape.ui.ScreensTest
+
+
+Each test class reports its results in the terminal. A successful run ends with `All tests passed.`
+
+The tests cover audio management, player movement, gameplay session behavior, keyboard bindings, and title/result screen interactions.
+
+## Technology
+
+- Java 21
+- Java Swing and AWT
+- Java Sound API
+- Plain `javac` compilation
+- Dependency-free test harness
+
+## Project scope
+
+Dungeon Escape is a standalone Java game project. It does not require a database, server, or third-party runtime library.
+
+The earlier `DungeonEscape` project is separate from this `DungeonEscapeV2` repository.
