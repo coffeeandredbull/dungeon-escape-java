@@ -21,8 +21,9 @@ A Java 21 dungeon escape game built with Java Swing. Explore dangerous dungeons,
 - Windows CMD or another terminal that supports Java commands.
 - Git, if you want to clone or contribute to the repository.
 
-## Project structure
+## Project Structure
 
+```text
 DungeonEscapeV2/
 ├── src/
 │   └── com/dungeonescape/
@@ -50,15 +51,19 @@ DungeonEscapeV2/
 │           └── TitlePanel.java
 ├── test/
 │   └── com/dungeonescape/
-│       ├── asset/AudioManagerTest.java
-│       ├── game/GameSessionTest.java
-│       ├── game/PlayerTest.java
+│       ├── asset/
+│       │   └── AudioManagerTest.java
+│       ├── game/
+│       │   ├── GameSessionTest.java
+│       │   └── PlayerTest.java
 │       └── ui/
 │           ├── InputBindingTest.java
 │           └── ScreensTest.java
-├── assets/
 ├── audio/
+│   └── key.wav
 └── README.md
+```
+
 
 
 ## Controls
