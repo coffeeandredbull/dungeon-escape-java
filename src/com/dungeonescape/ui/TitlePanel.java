@@ -51,7 +51,7 @@ public class TitlePanel extends JPanel {
 
         JLabel instructions = label("<html><div style='text-align:center'>"
                 + "Move with <b>W A S D</b> or the <b>arrow keys</b>.<br>"
-                + "Find the <b>key</b>, open the <b>chest</b> for gold, and drink <b>potions</b> to heal.<br>"
+                + "Find the <b>key</b>, open the <b>chest</b> for gold, and drink <b>potions</b> for extra life.<br>"
                 + "Avoid the <b>monster</b> and unlock the <b>door</b> to escape.<br>"
                 + "Press <b>Z</b> to undo your last step.</div></html>",
                 MUTED, new Font("SansSerif", Font.PLAIN, 15));
